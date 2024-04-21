@@ -15,11 +15,23 @@ find_package(Qt${QT_VERSION_MAJOR}
 )
 qt_standard_project_setup()
 
-set(PROJECT_SOURCES
-    main.cpp
+# Указываем пути к заголовочным файлам и cpp файлам
+set(HEADERS
+    include/paddle.h
+    include/brick.h
+    include/ball.h
+    include/breakout.h
+)
+set(SOURCES
+    src/main.cpp
+    src/paddle.cpp
+    src/brick.cpp
+    src/ball.cpp
+    src/breakout.cpp
 )
 
-qt_add_executable(Arkanoid ${PROJECT_SOURCES})
+# Добавляем пути к заголовочным файлам и cpp файлам в проект
+qt_add_executable(Arkanoid ${HEADERS} ${SOURCES})
 
 set_target_properties(Arkanoid
     PROPERTIES
