@@ -16,18 +16,11 @@ find_package(Qt${QT_VERSION_MAJOR}
 qt_standard_project_setup()
 
 # Указываем пути к заголовочным файлам и cpp файлам
-set(HEADERS
-    include/paddle.h
-    include/brick.h
-    include/ball.h
-    include/breakout.h
-)
 set(SOURCES
-    src/main.cpp
-    src/paddle.cpp
-    src/brick.cpp
-    src/ball.cpp
-    src/breakout.cpp
+    	src/Arkanoid.cpp
+	src/Arkanoid.h
+	src/main.cpp
+	src/Item.h    
 )
 
 # Добавляем пути к заголовочным файлам и cpp файлам в проект
