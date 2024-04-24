@@ -164,7 +164,10 @@ void Arkanoid::paintEvent(QPaintEvent* event) {
 
 //Обработчик таймера
 void Arkanoid::timerEvent(QTimerEvent* time_event) {
-
+	Q_UNUSED(time_event);
+	ballMove(); //движение шарика
+	checkBallTouch(); //проверка столкновения
+	this->repaint(); //перерисовка виджета
 }
 
 //Обработчик нажатия клавиш 
