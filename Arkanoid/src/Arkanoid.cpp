@@ -64,16 +64,27 @@ void Arkanoid::newGame() {
 	//m_paddle->setCords(QPoint(M_WIDTH/2 - paddle_image.width()/2, M_HEIGHT - M_PADDLE_Y_FROM_BOTTOM_BORDER));
 
 	//Объекты кирпичей
-	//QImage brick_image();
+	QImage brick_image();
 	qreal widget_width = this->width();
 
-	/*for () {
+	for (int h = 0; h < M_BRICKS_IN_HEIGHT; h++) {
+		int y = M_BRICK_Y_FROM_TOP_BORDER + h * brick_image.height();
+		for (int w = 0; w < M_BRICKS_IN_WIDTH; w++) {
+			m_bricks.push_back(new Item());
+			m_bricks.at(m_bricks.size() - 1)->setImage(brick_image);
+			int x;
+			// Рассчитываем расположение кирпичей по горизонтали
+			// для корректного отображения их по центру
 
-		for () {
-
+			if (M_BRICKS_IN_WIDTH % 2 == 0) { //Если четное кол-во кирпичей по горизонтали
+				x = widget_width / 2 - M_BRICKS_IN_WIDTH / 2 * brick_image.width() + w * brick_image.width();
+			}
+			else {
+				x = widget_width / 2 - M_BRICKS_IN_WIDTH / 2 * brick_image.width() - brick_image.width() / 2 + w * brick_image.width();
+				m_bricks.at(m_bricks.size() - 1)->setCords(QPoint(x, y));
+			}
 		}
-
-	}*/
+	}
 
 	//Объект мячика, текстура и начальное положение
 	m_ball = new Item();
@@ -81,6 +92,7 @@ void Arkanoid::newGame() {
 	m_ball->setCords(QPoint(
 		m_paddle->getCords().x() + paddle_image.width() / 2,
 		m_paddle->getCords().y() - paddle_image.height() / 2));
+
 	m_xdir = 1;
 	m_ydir = -1;
 
