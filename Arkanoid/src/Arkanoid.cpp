@@ -138,7 +138,7 @@ void Arkanoid::checkBallTouch() {
 	int widget_height = this->height();
 
 	//ѕроверка столкновени€ с границами
-	if (ball_cords.x() + ball_width < widget_width)
+	if (ball_cords.x() + ball_width > widget_width)
 		m_xdir = -1;
 	if (ball_cords.x() < 0)
 		m_xdir = 1;
@@ -189,8 +189,58 @@ void Arkanoid::checkBallTouch() {
 			m_score_mult = 1;
 		}
 	}
-	
-	
+
+	//—толкновение шарика с кирпичами
+	for (size_t brick = 0; brick < m_bricks.size(); brick++)
+	{
+		//ѕолучение информации про текущий блок кирпича
+		QPoint brick_cords = m_bricks.at(brick)->getCords();
+		QImage brick_image = m_bricks.at(brick)->getImage();
+		int brick_width = brick_image.width();
+		int brick_height = brick_image.height();
+		// ѕровер€ем коснулс€ ли м€чик кирпича снизу-вверх,
+		//  если коснулс€, то начисл€ем очки, 
+		// мен€ем направление движение м€чика и удал€ем этот кирпич
+		int hit_in_bottom_up = m_ydir == -1 && ball_cords.y() < brick_cords.y() + brick_height &&
+			ball_cords.y() > brick_cords.y() &&
+			ball_cords.x() + ball_width > brick_cords.x() &&
+			ball_cords.x() < brick_cords.x() + brick_width;
+
+		//ѕопадание сверху вниз
+		int hiy_top_down = m_ydir == 1 && ball_cords.y() + ball_height > brick_cords.y() &&
+			ball_cords.y() + ball_height < brick_cords.y() + brick_height &&
+			ball_cords.x() + ball_width > brick_cords.x() &&
+			ball_cords.x() < brick_cords.x() + brick_width;
+
+
+		if (hit_in_bottom_up) {
+			m_ydir = 1;//мен€ем направление движени€ шарика по оси Y
+			m_score += 10 * m_score_mult;//добавление очков
+			m_score_mult *= 2;
+			if (ball_cords.x() + ball_width / 2 < brick_cords.x() + brick_width / 2)//попадание в левую часть кирпича
+				m_xdir = -1;
+			else
+				m_xdir = 1;
+
+			Item* temp = m_bricks.at(brick); // сохраним указатель во временной переменной дл€ очистки пам€ти
+			m_bricks.remove(brick);
+			delete temp;
+		}
+		else if (hiy_top_down)
+		{
+			m_ydir = -1;
+			m_score += 20 * m_score_mult;
+			m_score_mult *= 2;
+			if (ball_cords.x() + ball_width / 2 < brick_cords.x() + brick_width / 2)
+				m_xdir = -1;
+			else
+				m_xdir = 1;
+
+			Item* temp = m_bricks.at(brick); // сохраним указатель во временной переменной дл€ очистки пам€ти
+			m_bricks.remove(brick);
+			delete temp;
+		}
+	}
 }
 
 void Arkanoid::paintGameField(QPainter* painter) {
