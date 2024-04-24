@@ -22,7 +22,6 @@ Arkanoid::Arkanoid(QWidget* parent)
 	this->setStyleSheet("background-color: black");
 	newGame(); //start game
 }
-
 Arkanoid::~Arkanoid() {
 	//Clear memory
 	delete m_paddle;
@@ -32,7 +31,6 @@ Arkanoid::~Arkanoid() {
 	m_bricks.clear();
 	delete m_ball;
 }
-
 void Arkanoid::newGame() {
 	//Проверка перед началом игры, если что-то запущено то аннулируем 
 	if (m_paddle != nullptr) { delete m_paddle; }
@@ -97,7 +95,6 @@ void Arkanoid::newGame() {
 	m_ydir = -1;
 
 }
-
 void Arkanoid::startGame() {
 	if (m_timerID == 0) {
 		m_timerID = startTimer(M_DELAY);
@@ -105,7 +102,6 @@ void Arkanoid::startGame() {
 		m_new_game - false;
 	}
 }
-
 void Arkanoid::pauseGame() {
 	killTimer(m_timerID);
 	m_timerID = 0;
@@ -132,9 +128,69 @@ void Arkanoid::ballMove() {
 
 //Обработка столкновений шарика
 void Arkanoid::checkBallTouch() {
+	//Получение информации о координатах, размерах шарика и поля
 	QPoint ball_cords = m_ball->getCords();
 	QImage ball_image = m_ball->getImage();
-	//.....
+
+	int ball_width = ball_image.width();
+	int ball_height = ball_image.height();
+	int widget_width = this->width();
+	int widget_height = this->height();
+
+	//Проверка столкновения с границами
+	if (ball_cords.x() + ball_width < widget_width)
+		m_xdir = -1;
+	if (ball_cords.x() < 0)
+		m_xdir = 1;
+	if (ball_cords.y() < 0)
+		m_ydir = 1;
+
+	//Если шар ушёл ниже стенки виджета, то GAME OVER
+	if (ball_cords.y() > widget_height) {
+		killTimer(m_timerID);
+		m_game_over = true;
+	}
+
+	//Инфо и координатах и размерах ракетки
+	QPoint paddle_cords = m_paddle->getCords();
+	QImage paddle_image = m_paddle->getImage();
+	int paddle_width = paddle_image.width();
+	int paddle_height = paddle_image.height();
+
+	//Столкновение шарика с ракеткой
+	int racket_ball_collision = (ball_cords.y() + ball_height > paddle_cords.y()) &&
+		(ball_cords.y() + ball_height < paddle_cords.y() + paddle_height) &&
+		ball_cords.x() + ball_width / 2 > paddle_cords.x() &&
+		ball_cords.x() - ball_width / 2 < paddle_cords.x() + paddle_width;
+
+	//Попадание в центр ракетки
+	int hit_in_center_of_paddle = ball_cords.x() + ball_width / 2 > paddle_cords.x() + paddle_width / 2 - ball_width / 2 &&
+		ball_cords.x() + ball_width / 2 < paddle_cords.x() + paddle_width / 2 + ball_width / 2;
+
+	//Попадание в правую часть
+	int hit_in_right_part_of_paddle = ball_cords.x() + ball_width / 2 > paddle_cords.x() + paddle_width / 2;
+
+
+	//Столкновение шарика с ракеткой
+	if (racket_ball_collision)
+	{
+		m_ydir = -1;//Смена направления движения мячика по Y
+		//Если шарик попал в центр ракетки
+		if (hit_in_center_of_paddle) {
+			m_xdir = 0;//Смена направления по оси X
+			m_score_mult = 1;//сбрасывание мультипликаторы на 1
+		}
+		else if (hit_in_right_part_of_paddle) {
+			m_xdir = 1;//Смена направления по оси X
+			m_score_mult = 1;//сбрасывание мультипликаторы на 1
+		}
+		else { //Попадание в левую часть, делаем то же самое
+			m_xdir = -1;
+			m_score_mult = 1;
+		}
+	}
+	
+	
 }
 
 void Arkanoid::paintGameField(QPainter* painter) {
@@ -143,7 +199,6 @@ void Arkanoid::paintGameField(QPainter* painter) {
 	}
 	painter->drawImage(m_ball->getCords(), m_ball->getImage());
 }
-
 void Arkanoid::paintText(QPainter* painter, qreal x, qreal y,
 	QString text, QFont font, QColor pen,
 	QColor brush)
