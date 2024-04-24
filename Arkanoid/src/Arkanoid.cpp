@@ -99,7 +99,11 @@ void Arkanoid::newGame() {
 }
 
 void Arkanoid::startGame() {
-
+	if (m_timerID == 0) {
+		m_timerID = startTimer(M_DELAY);
+		m_paused = false;
+		m_new_game - false;
+	}
 }
 
 void Arkanoid::pauseGame() {
@@ -108,7 +112,22 @@ void Arkanoid::pauseGame() {
 	m_paused = true;
 }
 void Arkanoid::ballMove() {
+	int add_x = 0;
+	int add_y = 0;
+	if (m_xdir == 1)
+		add_x++;
+	else if (m_xdir == -1)
+		add_x--;
 
+	if (m_ydir == 1)
+		add_y++;
+	else if (m_ydir == -1)
+		add_y--;
+
+	QPoint temp = m_ball->getCords();
+	int x = temp.x(); +add_x;
+	int y = temp.y() + add_y;
+	m_ball->setCords(QPoint(x, y));
 }
 
 //Обработка столкновений шарика
