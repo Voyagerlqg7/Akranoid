@@ -138,7 +138,10 @@ void Arkanoid::checkBallTouch() {
 }
 
 void Arkanoid::paintGameField(QPainter* painter) {
-
+	for (auto& brick : m_bricks) {
+		painter->drawImage(brick->getCords(), brick->getImage());
+	}
+	painter->drawImage(m_ball->getCords(), m_ball->getImage());
 }
 
 void Arkanoid::paintText(QPainter* painter, qreal x, qreal y,
@@ -148,8 +151,10 @@ void Arkanoid::paintText(QPainter* painter, qreal x, qreal y,
 	QFontMetrics metrics(font);
 	qreal text_width = metrics.horizontalAdvance(text);
 	QPainterPath path;
-
-
+	path.addText(x, y, font, text);
+	painter->setPen(QPen(pen));
+	painter->setBrush(QBrush(brush));
+	painter->drawPath(path);
 }
 
 //Обработка прорисовки главного виджета
