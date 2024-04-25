@@ -354,5 +354,59 @@ void Arkanoid::timerEvent(QTimerEvent* time_event) {
 
 //Обработчик нажатия клавиш 
 void Arkanoid::keyPressEvent(QKeyEvent* key_event) {
+	int key = key_event->key();//нажатие клавиши
+	//Нажатие ВЛЕВО
+	if (key == Qt::Key_Left) {
+		QPoint paddle_cords = m_paddle->getCords();
+		int x_paddle = paddle_cords.x();
+		//Перемещаем ракетку влево
+		if (x_paddle > 0) {
+			x_paddle -= M_PADDLE_STEP;
+			paddle_cords.setX(x_paddle);
+			m_paddle->setCords(paddle_cords);
+			// А если игра еще не началась, то вместе с ракеткой двигаем и мячик
+			if (m_new_game) {
+				QPoint ball_cords = m_ball->getCords();
+				int x_ball = ball_cords.x();
+				x_ball -= M_PADDLE_STEP;
+				ball_cords.setX(x_ball);
+				m_ball->setCords(ball_cords);
+			}
+		}
+	}
+	//Нажатие ВПРАВО
+	else if (key == Qt::Key_Right) {
+		QPoint paddle_cords = m_paddle->getCords();
+		int paddle_x = paddle_cords.x();
+		//Перемещение вправо
+		if (paddle_x < M_WIDTH - m_paddle->getImage().width()) {
+			paddle_x += M_PADDLE_STEP;
+			paddle_cords.setX(paddle_x);
+			m_paddle->setCords(paddle_cords);
+			//Так же двигаем шар с ракеткой если игра не началась
+			if (m_new_game) {
+				QPoint ball_cords = m_ball->getCords();
+				int x_ball = ball_cords.x();
+				x_ball += M_PADDLE_STEP;
+				ball_cords.setX(x_ball);
+				m_ball->setCords(ball_cords);
+			}
+		}
+	}
+	//Если нажат ПРОБЕЛ
+	else if (key == Qt::Key_Space) {
+		startGame(); //Игра начинается, выполните моё задание если хотите выжить)
+	}
+	//Пауза 
+	else if ((key == Qt::Key_P || key == Qt::Key_Escape) && !m_new_game) {
+		if (m_timerID != 0)//если игра не на паузе
+			pauseGame();//то ставим её
+		else//Если игра на паузе
+			startGame();//то снимаем её
+	}
+	//Новая игра
+	else if (key == Qt::Key_N)
+		newGame();
 
+	this->repaint();//Перерисовка
 }
