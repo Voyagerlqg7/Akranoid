@@ -19,7 +19,7 @@ Arkanoid::Arkanoid(QWidget* parent)
 	//Список инициализации
 {
 	this->setFixedSize(M_WIDTH, M_HEIGHT); //Установка размера виджета
-	this->setStyleSheet("background-color: black");
+	this->setStyleSheet("background-color: white");
 	newGame(); //start game
 }
 Arkanoid::~Arkanoid() {
@@ -50,19 +50,19 @@ void Arkanoid::newGame() {
 	m_score = 0;
 	m_paused = false;
 	m_timerID = 0;
-	m_score_mult = 0;
+	m_score_mult = 1;
 	m_game_over = false;
 	m_paused = false;
 	m_new_game = true;
 
 	//Объект ракетки
 	m_paddle = new Item();
-	QImage paddle_image("");   //!!!IMAGE NOT SELECTED YET!!!
-	//m_paddle->setImage(paddle_image);
-	//m_paddle->setCords(QPoint(M_WIDTH/2 - paddle_image.width()/2, M_HEIGHT - M_PADDLE_Y_FROM_BOTTOM_BORDER));
+	QImage paddle_image("paddle.png");
+	m_paddle->setImage(paddle_image);
+	m_paddle->setCords(QPoint(M_WIDTH/2 - paddle_image.width()/2, M_HEIGHT - M_PADDLE_Y_FROM_BOTTOM_BORDER));
 
 	//Объекты кирпичей
-	QImage brick_image();
+	QImage brick_image("brick.png");
 	qreal widget_width = this->width();
 
 	for (int h = 0; h < M_BRICKS_IN_HEIGHT; h++) {
@@ -86,7 +86,7 @@ void Arkanoid::newGame() {
 
 	//Объект мячика, текстура и начальное положение
 	m_ball = new Item();
-	//m_ball->setImage(QImage());
+	m_ball->setImage(QImage("ball.png"));
 	m_ball->setCords(QPoint(
 		m_paddle->getCords().x() + paddle_image.width() / 2,
 		m_paddle->getCords().y() - paddle_image.height() / 2));
@@ -99,7 +99,7 @@ void Arkanoid::startGame() {
 	if (m_timerID == 0) {
 		m_timerID = startTimer(M_DELAY);
 		m_paused = false;
-		m_new_game - false;
+		m_new_game = false;
 	}
 }
 void Arkanoid::pauseGame() {
@@ -121,7 +121,7 @@ void Arkanoid::ballMove() {
 		add_y--;
 
 	QPoint temp = m_ball->getCords();
-	int x = temp.x(); +add_x;
+	int x = temp.x() + add_x;
 	int y = temp.y() + add_y;
 	m_ball->setCords(QPoint(x, y));
 }
@@ -207,7 +207,7 @@ void Arkanoid::checkBallTouch() {
 			ball_cords.x() < brick_cords.x() + brick_width;
 
 		//Попадание сверху вниз
-		int hiy_top_down = m_ydir == 1 && ball_cords.y() + ball_height > brick_cords.y() &&
+		int hit_top_down = m_ydir == 1 && ball_cords.y() + ball_height > brick_cords.y() &&
 			ball_cords.y() + ball_height < brick_cords.y() + brick_height &&
 			ball_cords.x() + ball_width > brick_cords.x() &&
 			ball_cords.x() < brick_cords.x() + brick_width;
@@ -226,7 +226,7 @@ void Arkanoid::checkBallTouch() {
 			m_bricks.remove(brick);
 			delete temp;
 		}
-		else if (hiy_top_down)
+		else if (hit_top_down)
 		{
 			m_ydir = -1;
 			m_score += 20 * m_score_mult;
@@ -269,7 +269,7 @@ void Arkanoid::paintEvent(QPaintEvent* event) {
 	qreal widget_width = this->width();
 	qreal widget_height = this->height();
 	QPainter* painter = new QPainter(this);
-
+	painter->setRenderHint(QPainter::Antialiasing)//Сглаживание
 	//Если игра не закончена, рисуем поле
 	if (!m_game_over && m_bricks.size() > 0) {
 		paintGameField(painter);

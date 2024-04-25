@@ -1,6 +1,6 @@
 #include "QtWidgetsApplication1.h"
 #include <QtWidgets/QApplication>
-#include "Breakout.h"
+#include "Arkanoid.h"
 
 int main(int argc, char* argv[])
 {
