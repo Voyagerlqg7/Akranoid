@@ -244,6 +244,7 @@ void Arkanoid::checkBallTouch() {
 }
 
 void Arkanoid::paintGameField(QPainter* painter) {
+	painter->drawImage(m_paddle->getCords(), m_paddle->getImage());
 	for (auto& brick : m_bricks) {
 		painter->drawImage(brick->getCords(), brick->getImage());
 	}
@@ -264,7 +265,83 @@ void Arkanoid::paintText(QPainter* painter, qreal x, qreal y,
 
 //Обработка прорисовки главного виджета
 void Arkanoid::paintEvent(QPaintEvent* event) {
+	Q_UNUSED(event);
+	qreal widget_width = this->width();
+	qreal widget_height = this->height();
+	QPainter* painter = new QPainter(this);
 
+	//Если игра не закончена, рисуем поле
+	if (!m_game_over && m_bricks.size() > 0) {
+		paintGameField(painter);
+		QString text("Score: %1");
+		text = text.arg(m_score);
+		QFont font("Times new Roman", 14);
+		QFontMetrics metrics(font);
+		qreal text_width = metrics.horizontalAdvance(text);
+		qreal text_width = metrics.height();
+		paintText(painter, widget_width / 2 - text_width / 2, M_PADDLE_Y_FROM_BOTTOM_BORDER / 2, text, font, QColor("red"), QColor("red"));
+		//Подсказки как начать игру
+		if (m_new_game) {
+			QString text("To game begin click \"Space\"");
+			QFont font("Times New Roman", 10);
+			QFontMetrics metrics(font);
+			qreal text_width = metrics.horizontalAdvance(text);
+			qreal text_height = metrics.height();
+			paintText(painter, widget_width / 2 - text_width / 2, widget_height - static_cast<qreal>(M_PADDLE_Y_FROM_BOTTOM_BORDER)
+				/ 2 + text_height, text, font,
+				QColor("orange"),
+				QColor("black"));
+		}
+	}
+	else if (m_bricks.size() > 0) {
+		QString text("Game Over");
+		QString score("your score: %1");
+		score = score.arg(m_score);
+		QFont text_font("Times New Roman", 32);
+		QFont score_font("Times New Roman", 16);
+		QFontMetrics text_metrics(text_font);
+		QFontMetrics score_metrics(score_font);
+		qreal text_width = text_metrics.horizontalAdvance(text);
+		qreal score_width = score_metrics.horizontalAdvance(score);
+		qreal score_height = score_metrics.height();
+		paintText(painter, widget_width / 2 - text_width / 2, widget_height / 2, text, text_font,
+			QColor("red"),
+			QColor("black"));
+		paintText(painter, widget_width / 2 - score_width / 2, widget_height / 2 + score_height, score, score_font,
+			QColor("red"),
+			QColor("red"));
+	}
+	else// Если все кирпичи уничтожены
+	{
+		QString text("You win!");
+		QString score("your score: %1");
+		score = score.arg(m_score);
+		QFont text_font("Times New Roman", 32);
+		QFont score_font("Times New Roman", 16);
+		QFontMetrics text_metrics(text_font);
+		QFontMetrics score_metrics(score_font);
+		qreal text_width = text_metrics.horizontalAdvance(text);
+		qreal score_width = score_metrics.horizontalAdvance(score);
+		qreal score_height = score_metrics.height();
+		paintText(painter, widget_width / 2 - text_width / 2, widget_height / 2, text, text_font,
+			QColor("black"),
+			QColor("red"));
+		paintText(painter, widget_width / 2 - score_width / 2, widget_height / 2 + score_height, score, score_font,
+			QColor("red"),
+			QColor("red"));
+	}
+	//Пауза
+	if (m_paused) {
+		QString text("To game continue click \"Space\", or \"Escape\", or \"P\"");
+		QFont font("Times New Roman", 10);
+		QFontMetrics metrics(font);
+		qreal text_width = metrics.horizontalAdvance(text);
+		qreal text_height = metrics.height();
+		qreal widget_height = this->height();
+		paintText(painter, widget_width / 2 - text_width / 2, widget_height - static_cast<qreal>(M_PADDLE_Y_FROM_BOTTOM_BORDER) / 2 + text_height, text, font,
+			QColor("orange"),
+			QColor("black"));
+	}
 }
 
 //Обработчик таймера
