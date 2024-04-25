@@ -2,6 +2,9 @@
 #include <QKeyEvent>
 #include <QPainterPath>
 #include "Arkanoid.h"
+#include <cstdlib> 
+#include <ctime>   
+
 
 Arkanoid::Arkanoid(QWidget* parent)
 	: QWidget(parent),
@@ -14,7 +17,7 @@ Arkanoid::Arkanoid(QWidget* parent)
 	m_score(0),
 	m_score_mult(1),
 	m_game_over(false),
-	m_paused(false),
+	m_paused(0),
 	m_new_game(true)
 	//Список инициализации
 {
@@ -22,15 +25,21 @@ Arkanoid::Arkanoid(QWidget* parent)
 	this->setStyleSheet("background-color: white");
 	newGame(); //start game
 }
+
 Arkanoid::~Arkanoid() {
-	//Clear memory
+	// Очистка памяти
 	delete m_paddle;
+	m_paddle = nullptr;
+
 	for (auto& brick : m_bricks) {
 		delete brick;
 	}
 	m_bricks.clear();
+
 	delete m_ball;
+	m_ball = nullptr;
 }
+
 void Arkanoid::newGame() {
 	//Проверка перед началом игры, если что-то запущено то аннулируем 
 	if (m_paddle != nullptr) { delete m_paddle; }
@@ -52,41 +61,53 @@ void Arkanoid::newGame() {
 	m_timerID = 0;
 	m_score_mult = 1;
 	m_game_over = false;
-	m_paused = false;
+	
 	m_new_game = true;
 
 	//Объект ракетки
 	m_paddle = new Item();
-	QImage paddle_image("paddle.png");
+	QImage paddle_image("textures/paddle.png");   
 	m_paddle->setImage(paddle_image);
 	m_paddle->setCords(QPoint(M_WIDTH/2 - paddle_image.width()/2, M_HEIGHT - M_PADDLE_Y_FROM_BOTTOM_BORDER));
 
-	//Объекты кирпичей
-	QImage brick_image("brick.png");
+	srand(time(NULL));
+
+	// Объекты кирпичей
+	std::vector<std::string> brick_textures = {
+		"textures/brick_1.png",
+		"textures/brick_2.png",
+		"textures/brick_3.png",
+		"textures/brick_4.png",
+		"textures/brick_5.png",
+		"textures/brick_6.png",
+		"textures/brick_7.png"
+	};
+
+	QImage brick_image;
 	qreal widget_width = this->width();
 
 	for (int h = 0; h < M_BRICKS_IN_HEIGHT; h++) {
 		int y = M_BRICK_Y_FROM_TOP_BORDER + h * brick_image.height();
 		for (int w = 0; w < M_BRICKS_IN_WIDTH; w++) {
 			m_bricks.push_back(new Item());
-			m_bricks.at(m_bricks.size() - 1)->setImage(brick_image);
+			int random_index = rand() % brick_textures.size(); // Случайный индекс вектора текстур
+			m_bricks.back()->setImage(QImage(QString::fromStdString(brick_textures[random_index]))); // Загрузка изображения из файла
 			int x;
 			// Рассчитываем расположение кирпичей по горизонтали
 			// для корректного отображения их по центру
-
-			if (M_BRICKS_IN_WIDTH % 2 == 0) { //Если четное кол-во кирпичей по горизонтали
+			if (M_BRICKS_IN_WIDTH % 2 == 0) { // Если четное количество кирпичей по горизонтали
 				x = widget_width / 2 - M_BRICKS_IN_WIDTH / 2 * brick_image.width() + w * brick_image.width();
 			}
 			else {
 				x = widget_width / 2 - M_BRICKS_IN_WIDTH / 2 * brick_image.width() - brick_image.width() / 2 + w * brick_image.width();
-				m_bricks.at(m_bricks.size() - 1)->setCords(QPoint(x, y));
+				m_bricks.back()->setCords(QPoint(x, y));
 			}
 		}
 	}
 
 	//Объект мячика, текстура и начальное положение
 	m_ball = new Item();
-	m_ball->setImage(QImage("ball.png"));
+	m_ball->setImage(QImage("src/textures/ball.png"));
 	m_ball->setCords(QPoint(
 		m_paddle->getCords().x() + paddle_image.width() / 2,
 		m_paddle->getCords().y() - paddle_image.height() / 2));
@@ -95,6 +116,7 @@ void Arkanoid::newGame() {
 	m_ydir = -1;
 
 }
+
 void Arkanoid::startGame() {
 	if (m_timerID == 0) {
 		m_timerID = startTimer(M_DELAY);
@@ -102,11 +124,13 @@ void Arkanoid::startGame() {
 		m_new_game = false;
 	}
 }
+
 void Arkanoid::pauseGame() {
 	killTimer(m_timerID);
 	m_timerID = 0;
 	m_paused = true;
 }
+
 void Arkanoid::ballMove() {
 	int add_x = 0;
 	int add_y = 0;
@@ -126,8 +150,9 @@ void Arkanoid::ballMove() {
 	m_ball->setCords(QPoint(x, y));
 }
 
-//Обработка столкновений шарика
+//!!!!!!Обработка столкновений шарика!!!!!!
 void Arkanoid::checkBallTouch() {
+
 	//Получение информации о координатах, размерах шарика и поля
 	QPoint ball_cords = m_ball->getCords();
 	QImage ball_image = m_ball->getImage();
@@ -138,7 +163,7 @@ void Arkanoid::checkBallTouch() {
 	int widget_height = this->height();
 
 	//Проверка столкновения с границами
-	if (ball_cords.x() + ball_width > widget_width)
+	if (ball_cords.x() + ball_width < widget_width)
 		m_xdir = -1;
 	if (ball_cords.x() < 0)
 		m_xdir = 1;
@@ -146,7 +171,7 @@ void Arkanoid::checkBallTouch() {
 		m_ydir = 1;
 
 	//Если шар ушёл ниже стенки виджета, то GAME OVER
-	if (ball_cords.y() > widget_height) {
+	if (ball_cords.y()> widget_height) {
 		killTimer(m_timerID);
 		m_game_over = true;
 	}
@@ -162,11 +187,11 @@ void Arkanoid::checkBallTouch() {
 		(ball_cords.y() + ball_height < paddle_cords.y() + paddle_height) &&
 		ball_cords.x() + ball_width / 2 > paddle_cords.x() &&
 		ball_cords.x() - ball_width / 2 < paddle_cords.x() + paddle_width;
-
+	
 	//Попадание в центр ракетки
 	int hit_in_center_of_paddle = ball_cords.x() + ball_width / 2 > paddle_cords.x() + paddle_width / 2 - ball_width / 2 &&
 		ball_cords.x() + ball_width / 2 < paddle_cords.x() + paddle_width / 2 + ball_width / 2;
-
+	
 	//Попадание в правую часть
 	int hit_in_right_part_of_paddle = ball_cords.x() + ball_width / 2 > paddle_cords.x() + paddle_width / 2;
 
@@ -190,7 +215,6 @@ void Arkanoid::checkBallTouch() {
 		}
 	}
 
-	//Столкновение шарика с кирпичами
 	for (size_t brick = 0; brick < m_bricks.size(); brick++)
 	{
 		//Получение информации про текущий блок кирпича
@@ -205,9 +229,9 @@ void Arkanoid::checkBallTouch() {
 			ball_cords.y() > brick_cords.y() &&
 			ball_cords.x() + ball_width > brick_cords.x() &&
 			ball_cords.x() < brick_cords.x() + brick_width;
-
+		
 		//Попадание сверху вниз
-		int hit_top_down = m_ydir == 1 && ball_cords.y() + ball_height > brick_cords.y() &&
+		int hiy_top_down = m_ydir == 1 && ball_cords.y() + ball_height > brick_cords.y() &&
 			ball_cords.y() + ball_height < brick_cords.y() + brick_height &&
 			ball_cords.x() + ball_width > brick_cords.x() &&
 			ball_cords.x() < brick_cords.x() + brick_width;
@@ -215,7 +239,7 @@ void Arkanoid::checkBallTouch() {
 
 		if (hit_in_bottom_up) {
 			m_ydir = 1;//меняем направление движения шарика по оси Y
-			m_score += 10 * m_score_mult;//добавление очков
+			m_score += 10*m_score_mult;//добавление очков
 			m_score_mult *= 2;
 			if (ball_cords.x() + ball_width / 2 < brick_cords.x() + brick_width / 2)//попадание в левую часть кирпича
 				m_xdir = -1;
@@ -226,7 +250,7 @@ void Arkanoid::checkBallTouch() {
 			m_bricks.remove(brick);
 			delete temp;
 		}
-		else if (hit_top_down)
+		else if (hiy_top_down) 
 		{
 			m_ydir = -1;
 			m_score += 20 * m_score_mult;
@@ -245,11 +269,11 @@ void Arkanoid::checkBallTouch() {
 
 void Arkanoid::paintGameField(QPainter* painter) {
 	painter->drawImage(m_paddle->getCords(), m_paddle->getImage());
-	for (auto& brick : m_bricks) {
+	for (auto& brick : m_bricks)
 		painter->drawImage(brick->getCords(), brick->getImage());
-	}
 	painter->drawImage(m_ball->getCords(), m_ball->getImage());
 }
+
 void Arkanoid::paintText(QPainter* painter, qreal x, qreal y,
 	QString text, QFont font, QColor pen,
 	QColor brush)
@@ -269,16 +293,16 @@ void Arkanoid::paintEvent(QPaintEvent* event) {
 	qreal widget_width = this->width();
 	qreal widget_height = this->height();
 	QPainter* painter = new QPainter(this);
-	painter->setRenderHint(QPainter::Antialiasing)//Сглаживание
+
 	//Если игра не закончена, рисуем поле
-	if (!m_game_over && m_bricks.size() > 0) {
+	if (!m_game_over && m_bricks.size()>0) {
 		paintGameField(painter);
 		QString text("Score: %1");
 		text = text.arg(m_score);
 		QFont font("Times new Roman", 14);
 		QFontMetrics metrics(font);
 		qreal text_width = metrics.horizontalAdvance(text);
-		qreal text_width = metrics.height();
+		qreal text_height = metrics.height();
 		paintText(painter, widget_width / 2 - text_width / 2, M_PADDLE_Y_FROM_BOTTOM_BORDER / 2, text, font, QColor("red"), QColor("red"));
 		//Подсказки как начать игру
 		if (m_new_game) {
@@ -287,13 +311,13 @@ void Arkanoid::paintEvent(QPaintEvent* event) {
 			QFontMetrics metrics(font);
 			qreal text_width = metrics.horizontalAdvance(text);
 			qreal text_height = metrics.height();
-			paintText(painter, widget_width / 2 - text_width / 2, widget_height - static_cast<qreal>(M_PADDLE_Y_FROM_BOTTOM_BORDER)
+			paintText(painter, widget_width / 2 - text_width / 2, widget_height - static_cast<qreal>(M_PADDLE_Y_FROM_BOTTOM_BORDER) 
 				/ 2 + text_height, text, font,
-				QColor("orange"),
+				QColor("orange"), 
 				QColor("black"));
 		}
 	}
-	else if (m_bricks.size() > 0) {
+	else if (m_bricks.size()>0) {
 		QString text("Game Over");
 		QString score("your score: %1");
 		score = score.arg(m_score);
@@ -304,11 +328,11 @@ void Arkanoid::paintEvent(QPaintEvent* event) {
 		qreal text_width = text_metrics.horizontalAdvance(text);
 		qreal score_width = score_metrics.horizontalAdvance(score);
 		qreal score_height = score_metrics.height();
-		paintText(painter, widget_width / 2 - text_width / 2, widget_height / 2, text, text_font,
+		paintText(painter, widget_width / 2 - text_width / 2, widget_height / 2, text, text_font, 
 			QColor("red"),
 			QColor("black"));
 		paintText(painter, widget_width / 2 - score_width / 2, widget_height / 2 + score_height, score, score_font,
-			QColor("red"),
+			QColor("red"), 
 			QColor("red"));
 	}
 	else// Если все кирпичи уничтожены
@@ -323,11 +347,11 @@ void Arkanoid::paintEvent(QPaintEvent* event) {
 		qreal text_width = text_metrics.horizontalAdvance(text);
 		qreal score_width = score_metrics.horizontalAdvance(score);
 		qreal score_height = score_metrics.height();
-		paintText(painter, widget_width / 2 - text_width / 2, widget_height / 2, text, text_font,
+		paintText(painter, widget_width / 2 - text_width / 2, widget_height / 2, text, text_font, 
 			QColor("black"),
 			QColor("red"));
 		paintText(painter, widget_width / 2 - score_width / 2, widget_height / 2 + score_height, score, score_font,
-			QColor("red"),
+			QColor("red"), 
 			QColor("red"));
 	}
 	//Пауза
@@ -339,28 +363,28 @@ void Arkanoid::paintEvent(QPaintEvent* event) {
 		qreal text_height = metrics.height();
 		qreal widget_height = this->height();
 		paintText(painter, widget_width / 2 - text_width / 2, widget_height - static_cast<qreal>(M_PADDLE_Y_FROM_BOTTOM_BORDER) / 2 + text_height, text, font,
-			QColor("orange"),
+			QColor("orange"), 
 			QColor("black"));
 	}
 }
 
 //Обработчик таймера
-void Arkanoid::timerEvent(QTimerEvent* time_event) {
-	Q_UNUSED(time_event);
+void Arkanoid::timerEvent(QTimerEvent* event) {
+	Q_UNUSED(event);
 	ballMove(); //движение шарика
 	checkBallTouch(); //проверка столкновения
 	this->repaint(); //перерисовка виджета
 }
 
 //Обработчик нажатия клавиш 
-void Arkanoid::keyPressEvent(QKeyEvent* key_event) {
-	int key = key_event->key();//нажатие клавиши
+void Arkanoid::keyPressEvent(QKeyEvent* event) {
+	int key = event->key();//нажатие клавиши
 	//Нажатие ВЛЕВО
-	if (key == Qt::Key_Left) {
+	if (key== Qt::Key_Left) {
 		QPoint paddle_cords = m_paddle->getCords();
 		int x_paddle = paddle_cords.x();
 		//Перемещаем ракетку влево
-		if (x_paddle > 0) {
+		if (x_paddle>0) {
 			x_paddle -= M_PADDLE_STEP;
 			paddle_cords.setX(x_paddle);
 			m_paddle->setCords(paddle_cords);
@@ -375,11 +399,11 @@ void Arkanoid::keyPressEvent(QKeyEvent* key_event) {
 		}
 	}
 	//Нажатие ВПРАВО
-	else if (key == Qt::Key_Right) {
+	else if (key==Qt::Key_Right) {
 		QPoint paddle_cords = m_paddle->getCords();
 		int paddle_x = paddle_cords.x();
 		//Перемещение вправо
-		if (paddle_x < M_WIDTH - m_paddle->getImage().width()) {
+		if (paddle_x<M_WIDTH - m_paddle->getImage().width()) {
 			paddle_x += M_PADDLE_STEP;
 			paddle_cords.setX(paddle_x);
 			m_paddle->setCords(paddle_cords);
@@ -398,14 +422,14 @@ void Arkanoid::keyPressEvent(QKeyEvent* key_event) {
 		startGame(); //Игра начинается, выполните моё задание если хотите выжить)
 	}
 	//Пауза 
-	else if ((key == Qt::Key_P || key == Qt::Key_Escape) && !m_new_game) {
+	else if ((key == Qt::Key_P || key == Qt::Key_Escape)  && !m_new_game) {
 		if (m_timerID != 0)//если игра не на паузе
 			pauseGame();//то ставим её
 		else//Если игра на паузе
 			startGame();//то снимаем её
 	}
 	//Новая игра
-	else if (key == Qt::Key_N)
+	else if (key==Qt::Key_N) 
 		newGame();
 
 	this->repaint();//Перерисовка

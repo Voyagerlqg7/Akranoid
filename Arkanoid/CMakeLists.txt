@@ -15,16 +15,14 @@ find_package(Qt${QT_VERSION_MAJOR}
 )
 qt_standard_project_setup()
 
-# Указываем пути к заголовочным файлам и cpp файлам
-set(SOURCES
-    	src/Arkanoid.cpp
-	src/Arkanoid.h
-	src/main.cpp
-	src/Item.h    
+set(PROJECT_SOURCES
+    src/main.cpp
+    src/Arkanoid.h
+    src/Arkanoid.cpp
+    src/Item.h 
 )
 
-# Добавляем пути к заголовочным файлам и cpp файлам в проект
-qt_add_executable(Arkanoid ${HEADERS} ${SOURCES})
+qt_add_executable(Arkanoid ${PROJECT_SOURCES})
 
 set_target_properties(Arkanoid
     PROPERTIES
