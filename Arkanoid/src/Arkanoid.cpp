@@ -4,10 +4,12 @@
 #include "Arkanoid.h"
 #include <cstdlib> 
 #include <ctime>   
+#include <QRandomGenerator>
 
 
 Arkanoid::Arkanoid(QWidget* parent)
 	: QWidget(parent),
+	//Список инициализации
 	m_paddle(),
 	m_bricks(),
 	m_ball(),
@@ -19,10 +21,9 @@ Arkanoid::Arkanoid(QWidget* parent)
 	m_game_over(false),
 	m_paused(0),
 	m_new_game(true)
-	//Список инициализации
 {
 	this->setFixedSize(M_WIDTH, M_HEIGHT); //Установка размера виджета
-	this->setStyleSheet("background-color: white");
+	this->setStyleSheet("background-color: black");
 	newGame(); //start game
 }
 
@@ -41,80 +42,80 @@ Arkanoid::~Arkanoid() {
 }
 
 void Arkanoid::newGame() {
-	//Проверка перед началом игры, если что-то запущено то аннулируем 
-	if (m_paddle != nullptr) { delete m_paddle; }
-
-	for (auto& brick : m_bricks) {
-		if (brick != nullptr) {
+	// Освобождаем память перед новым выделением
+	if (m_paddle != nullptr)
+		delete m_paddle;
+	for (auto& brick : m_bricks)
+		if (brick != nullptr)
+		{
 			delete brick;
 			brick = nullptr;
 		}
-	}
-
 	m_bricks.clear();
-	if (m_ball != nullptr) { delete m_ball; }
-	if (m_timerID != 0) { killTimer(m_timerID); }
-
-	//Сброс значений переменных
-	m_score = 0;
-	m_paused = false;
+	if (m_ball != nullptr)
+		delete m_ball;
+	// Если был запущен таймер, то остановим его
+	if (m_timerID != 0)
+		killTimer(m_timerID);
+	// Сбрасываем значения всех переменных-членов
 	m_timerID = 0;
+	m_score = 0;
 	m_score_mult = 1;
 	m_game_over = false;
-	
+	m_paused = false;
 	m_new_game = true;
-
-	//Объект ракетки
+	// Выделяем память под объект ракетки, задаем ему изображение и начальные координаты
 	m_paddle = new Item();
-	QImage paddle_image("textures/paddle.png");   
+	QImage paddle_image("textures/Paddle_1.png");
 	m_paddle->setImage(paddle_image);
-	m_paddle->setCords(QPoint(M_WIDTH/2 - paddle_image.width()/2, M_HEIGHT - M_PADDLE_Y_FROM_BOTTOM_BORDER));
+	m_paddle->setCords(QPoint(M_WIDTH / 2 - paddle_image.width() / 2, M_HEIGHT - M_PADDLE_Y_FROM_BOTTOM_BORDER));
 
-	srand(time(NULL));
 
-	// Объекты кирпичей
-	std::vector<std::string> brick_textures = {
-		"textures/brick_1.png",
-		"textures/brick_2.png",
-		"textures/brick_3.png",
-		"textures/brick_4.png",
-		"textures/brick_5.png",
-		"textures/brick_6.png",
-		"textures/brick_7.png"
+	// Выделяем память под объекты кирпичей, задаем им изображение и начальные координаты
+	// Создайте вектор с путями к изображениям кирпичей
+	std::vector<QString> brick_images = {
+		"textures/BlueWall.png",
+		"textures/GoldWall.png",
+		"textures/GreenWall.png",
+		"textures/LightBlueWall.png",
+		"textures/OrangeWall.png",
+		"textures/PinkWall.png",
+		"textures/RedWall.png",
+		"textures/SilverWall.png",
+		"textures/WhiteWall.png",
+		"textures/YellowWall.png"
 	};
-
-	QImage brick_image;
+	QImage brick_image("textures/BlueWall.png");
 	qreal widget_width = this->width();
+	QRandomGenerator generator; // Создайте объект генератора случайных чисел
 
-	for (int h = 0; h < M_BRICKS_IN_HEIGHT; h++) {
+	for (int h = 0; h < M_BRICKS_IN_HEIGHT; h++)
+	{
 		int y = M_BRICK_Y_FROM_TOP_BORDER + h * brick_image.height();
-		for (int w = 0; w < M_BRICKS_IN_WIDTH; w++) {
+		for (int w = 0; w < M_BRICKS_IN_WIDTH; w++)
+		{
 			m_bricks.push_back(new Item());
-			int random_index = rand() % brick_textures.size(); // Случайный индекс вектора текстур
-			m_bricks.back()->setImage(QImage(QString::fromStdString(brick_textures[random_index]))); // Загрузка изображения из файла
+			// Выберите случайный индекс изображения из вектора
+			int random_index = generator.bounded(brick_images.size());
+			QString random_image_path = brick_images[random_index];
+			QImage brick_image(random_image_path);
+			m_bricks.at(m_bricks.size() - 1)->setImage(brick_image);
+
 			int x;
-			// Рассчитываем расположение кирпичей по горизонтали
-			// для корректного отображения их по центру
-			if (M_BRICKS_IN_WIDTH % 2 == 0) { // Если четное количество кирпичей по горизонтали
+			// Рассчитываем расположение кирпичей по горизонтали для корректного отображения их по центру
+			if (M_BRICKS_IN_WIDTH % 2 == 0) // если кирпичей в горизонтали четное число
 				x = widget_width / 2 - M_BRICKS_IN_WIDTH / 2 * brick_image.width() + w * brick_image.width();
-			}
-			else {
+			else // если нечетное
 				x = widget_width / 2 - M_BRICKS_IN_WIDTH / 2 * brick_image.width() - brick_image.width() / 2 + w * brick_image.width();
-				m_bricks.back()->setCords(QPoint(x, y));
-			}
+			m_bricks.at(m_bricks.size() - 1)->setCords(QPoint(x, y));
 		}
 	}
-
-	//Объект мячика, текстура и начальное положение
+	// Выделяем память пож объект мячика, задаем ему изображение, начальные координаты и направления движения
 	m_ball = new Item();
-	m_ball->setImage(QImage("src/textures/ball.png"));
-	m_ball->setCords(QPoint(
-		m_paddle->getCords().x() + paddle_image.width() / 2,
-		m_paddle->getCords().y() - paddle_image.height() / 2));
-
+	m_ball->setImage(QImage("textures/ball.png"));
+	m_ball->setCords(QPoint(m_paddle->getCords().x() + paddle_image.width() / 2, m_paddle->getCords().y() - paddle_image.height() / 2));
 	m_xdir = 1;
 	m_ydir = -1;
-
 }
 
 void Arkanoid::startGame() {
@@ -153,116 +154,99 @@ void Arkanoid::ballMove() {
 //!!!!!!Обработка столкновений шарика!!!!!!
 void Arkanoid::checkBallTouch() {
 
-	//Получение информации о координатах, размерах шарика и поля
+	// Получаем информацию о координатах и размере мячика и размерах игрового поля
 	QPoint ball_cords = m_ball->getCords();
 	QImage ball_image = m_ball->getImage();
-
 	int ball_width = ball_image.width();
 	int ball_height = ball_image.height();
 	int widget_width = this->width();
 	int widget_height = this->height();
-
-	//Проверка столкновения с границами
-	if (ball_cords.x() + ball_width < widget_width)
+	// Проверяем на столкновение мячика со стенами, если такое происходит, то меняем ему направление
+	if (ball_cords.x() + ball_width > widget_width)
 		m_xdir = -1;
 	if (ball_cords.x() < 0)
 		m_xdir = 1;
 	if (ball_cords.y() < 0)
 		m_ydir = 1;
-
-	//Если шар ушёл ниже стенки виджета, то GAME OVER
-	if (ball_cords.y()> widget_height) {
+	// Если мячик "упал" за нижнюю стенку виджета, то игра закончилась
+	if (ball_cords.y() > widget_height)
+	{
 		killTimer(m_timerID);
 		m_game_over = true;
 	}
-
-	//Инфо и координатах и размерах ракетки
+	// Получаем информацию о координатах и размерах ракетки
 	QPoint paddle_cords = m_paddle->getCords();
 	QImage paddle_image = m_paddle->getImage();
 	int paddle_width = paddle_image.width();
 	int paddle_height = paddle_image.height();
-
-	//Столкновение шарика с ракеткой
-	int racket_ball_collision = (ball_cords.y() + ball_height > paddle_cords.y()) &&
+	// Проверяем на столкновение мячика с ракеткой
+	if ((ball_cords.y() + ball_height > paddle_cords.y()) &&
 		(ball_cords.y() + ball_height < paddle_cords.y() + paddle_height) &&
 		ball_cords.x() + ball_width / 2 > paddle_cords.x() &&
-		ball_cords.x() - ball_width / 2 < paddle_cords.x() + paddle_width;
-	
-	//Попадание в центр ракетки
-	int hit_in_center_of_paddle = ball_cords.x() + ball_width / 2 > paddle_cords.x() + paddle_width / 2 - ball_width / 2 &&
-		ball_cords.x() + ball_width / 2 < paddle_cords.x() + paddle_width / 2 + ball_width / 2;
-	
-	//Попадание в правую часть
-	int hit_in_right_part_of_paddle = ball_cords.x() + ball_width / 2 > paddle_cords.x() + paddle_width / 2;
-
-
-	//Столкновение шарика с ракеткой
-	if (racket_ball_collision)
+		ball_cords.x() - ball_width / 2 < paddle_cords.x() + paddle_width)
 	{
-		m_ydir = -1;//Смена направления движения мячика по Y
-		//Если шарик попал в центр ракетки
-		if (hit_in_center_of_paddle) {
-			m_xdir = 0;//Смена направления по оси X
-			m_score_mult = 1;//сбрасывание мультипликаторы на 1
+		m_ydir = -1; // меняем направление движения мячика по оси Y
+		// Если мячик попал в центр ракетки
+		if (ball_cords.x() + ball_width / 2 > paddle_cords.x() + paddle_width / 2 - ball_width / 2 &&
+			ball_cords.x() + ball_width / 2 < paddle_cords.x() + paddle_width / 2 + ball_width / 2)
+		{
+			m_xdir = 0; // меняем направление движения мячика по оси X
+			m_score_mult = 1; // сбрасываем мультипликатор на 1
 		}
-		else if (hit_in_right_part_of_paddle) {
-			m_xdir = 1;//Смена направления по оси X
-			m_score_mult = 1;//сбрасывание мультипликаторы на 1
+		// Если мячик попал в правую часть ракетки
+		else if (ball_cords.x() + ball_width / 2 > paddle_cords.x() + paddle_width / 2)
+		{
+			m_xdir = 1; // меняем направление движения мячика по оси X
+			m_score_mult = 1; // сбрасываем мультипликатор на 1
 		}
-		else { //Попадание в левую часть, делаем то же самое
-			m_xdir = -1;
-			m_score_mult = 1;
+		// Если мячик попал в левую часть ракетки
+		else
+		{
+			m_xdir = -1; // меняем направление движения мячика по оси X
+			m_score_mult = 1; // сбрасываем мультипликатор на 1
 		}
 	}
-
+	// Проверяем на столкновение мячика с кирпичами
 	for (size_t brick = 0; brick < m_bricks.size(); brick++)
 	{
-		//Получение информации про текущий блок кирпича
+		// Получаем информацию про текущий кирпич
 		QPoint brick_cords = m_bricks.at(brick)->getCords();
 		QImage brick_image = m_bricks.at(brick)->getImage();
 		int brick_width = brick_image.width();
 		int brick_height = brick_image.height();
-		// Проверяем коснулся ли мячик кирпича снизу-вверх,
-		//  если коснулся, то начисляем очки, 
-		// меняем направление движение мячика и удаляем этот кирпич
-		int hit_in_bottom_up = m_ydir == -1 && ball_cords.y() < brick_cords.y() + brick_height &&
+		// Проверяем коснулся ли мячик кирпича снизу-вверх, если коснулся, то начисляем очки, меняем направление движение мячика и удаляем этот кирпич
+		if (m_ydir == -1 && ball_cords.y() < brick_cords.y() + brick_height &&
 			ball_cords.y() > brick_cords.y() &&
 			ball_cords.x() + ball_width > brick_cords.x() &&
-			ball_cords.x() < brick_cords.x() + brick_width;
-		
-		//Попадание сверху вниз
-		int hiy_top_down = m_ydir == 1 && ball_cords.y() + ball_height > brick_cords.y() &&
+			ball_cords.x() < brick_cords.x() + brick_width)
+		{
+			m_ydir = 1; // меняем направление движения мячика по оси Y
+			m_score += 10 * m_score_mult; // добавляем очки
+			m_score_mult *= 2; // умножаем мультипликатор
+			if (ball_cords.x() + ball_width / 2 < brick_cords.x() + brick_width / 2) // если мячик попал в левую часть кирпича
+				m_xdir = -1; // меняем направление движения мячика по оси X
+			else // если мячик попал в правую часть кирпича
+				m_xdir = 1; // меняем направление движения мячика по оси X
+			Item* temp = m_bricks.at(brick); // сохраним указатель во временной переменной для очистки памяти
+			m_bricks.remove(brick); // удалим кирпич из списка
+			delete temp; // очистим память
+		}
+		// Проверяем коснулся ли мячик кирпича сверху-вниз, если коснулся, то начисляем очки, меняем направление движение мячика и удаляем этот кирпич
+		else if (m_ydir == 1 && ball_cords.y() + ball_height > brick_cords.y() &&
 			ball_cords.y() + ball_height < brick_cords.y() + brick_height &&
 			ball_cords.x() + ball_width > brick_cords.x() &&
-			ball_cords.x() < brick_cords.x() + brick_width;
-
-
-		if (hit_in_bottom_up) {
-			m_ydir = 1;//меняем направление движения шарика по оси Y
-			m_score += 10*m_score_mult;//добавление очков
-			m_score_mult *= 2;
-			if (ball_cords.x() + ball_width / 2 < brick_cords.x() + brick_width / 2)//попадание в левую часть кирпича
-				m_xdir = -1;
-			else
-				m_xdir = 1;
-
-			Item* temp = m_bricks.at(brick); // сохраним указатель во временной переменной для очистки памяти
-			m_bricks.remove(brick);
-			delete temp;
-		}
-		else if (hiy_top_down) 
+			ball_cords.x() < brick_cords.x() + brick_width)
 		{
-			m_ydir = -1;
-			m_score += 20 * m_score_mult;
-			m_score_mult *= 2;
-			if (ball_cords.x() + ball_width / 2 < brick_cords.x() + brick_width / 2)
-				m_xdir = -1;
-			else
-				m_xdir = 1;
-
+			m_ydir = -1; // меняем направление движения мячика по оси Y
+			m_score += 20 * m_score_mult; // добавляем очки
+			m_score_mult *= 2; // умножаем мультипликатор
+			if (ball_cords.x() + ball_width / 2 < brick_cords.x() + brick_width / 2) // если мячик попал в левую часть кирпича
+				m_xdir = -1; // меняем направление движения мячика по оси X
+			else // если мячик попал в правую часть кирпича
+				m_xdir = 1; // меняем направление движения мячика по оси X
 			Item* temp = m_bricks.at(brick); // сохраним указатель во временной переменной для очистки памяти
-			m_bricks.remove(brick);
-			delete temp;
+			m_bricks.remove(brick); // удалим кирпич из списка
+			delete temp; // очистим память
 		}
 	}
 }
@@ -293,9 +277,9 @@ void Arkanoid::paintEvent(QPaintEvent* event) {
 	qreal widget_width = this->width();
 	qreal widget_height = this->height();
 	QPainter* painter = new QPainter(this);
-
+	painter->setRenderHint(QPainter::Antialiasing);//Небольшое сглаживание
 	//Если игра не закончена, рисуем поле
-	if (!m_game_over && m_bricks.size()>0) {
+	if (!m_game_over && m_bricks.size() > 0) {
 		paintGameField(painter);
 		QString text("Score: %1");
 		text = text.arg(m_score);
@@ -311,13 +295,13 @@ void Arkanoid::paintEvent(QPaintEvent* event) {
 			QFontMetrics metrics(font);
 			qreal text_width = metrics.horizontalAdvance(text);
 			qreal text_height = metrics.height();
-			paintText(painter, widget_width / 2 - text_width / 2, widget_height - static_cast<qreal>(M_PADDLE_Y_FROM_BOTTOM_BORDER) 
+			paintText(painter, widget_width / 2 - text_width / 2, widget_height - static_cast<qreal>(M_PADDLE_Y_FROM_BOTTOM_BORDER)
 				/ 2 + text_height, text, font,
-				QColor("orange"), 
+				QColor("orange"),
 				QColor("black"));
 		}
 	}
-	else if (m_bricks.size()>0) {
+	else if (m_bricks.size() > 0) {
 		QString text("Game Over");
 		QString score("your score: %1");
 		score = score.arg(m_score);
@@ -328,11 +312,11 @@ void Arkanoid::paintEvent(QPaintEvent* event) {
 		qreal text_width = text_metrics.horizontalAdvance(text);
 		qreal score_width = score_metrics.horizontalAdvance(score);
 		qreal score_height = score_metrics.height();
-		paintText(painter, widget_width / 2 - text_width / 2, widget_height / 2, text, text_font, 
+		paintText(painter, widget_width / 2 - text_width / 2, widget_height / 2, text, text_font,
 			QColor("red"),
 			QColor("black"));
 		paintText(painter, widget_width / 2 - score_width / 2, widget_height / 2 + score_height, score, score_font,
-			QColor("red"), 
+			QColor("red"),
 			QColor("red"));
 	}
 	else// Если все кирпичи уничтожены
@@ -347,11 +331,11 @@ void Arkanoid::paintEvent(QPaintEvent* event) {
 		qreal text_width = text_metrics.horizontalAdvance(text);
 		qreal score_width = score_metrics.horizontalAdvance(score);
 		qreal score_height = score_metrics.height();
-		paintText(painter, widget_width / 2 - text_width / 2, widget_height / 2, text, text_font, 
+		paintText(painter, widget_width / 2 - text_width / 2, widget_height / 2, text, text_font,
 			QColor("black"),
 			QColor("red"));
 		paintText(painter, widget_width / 2 - score_width / 2, widget_height / 2 + score_height, score, score_font,
-			QColor("red"), 
+			QColor("red"),
 			QColor("red"));
 	}
 	//Пауза
@@ -363,7 +347,7 @@ void Arkanoid::paintEvent(QPaintEvent* event) {
 		qreal text_height = metrics.height();
 		qreal widget_height = this->height();
 		paintText(painter, widget_width / 2 - text_width / 2, widget_height - static_cast<qreal>(M_PADDLE_Y_FROM_BOTTOM_BORDER) / 2 + text_height, text, font,
-			QColor("orange"), 
+			QColor("orange"),
 			QColor("black"));
 	}
 }
@@ -380,11 +364,11 @@ void Arkanoid::timerEvent(QTimerEvent* event) {
 void Arkanoid::keyPressEvent(QKeyEvent* event) {
 	int key = event->key();//нажатие клавиши
 	//Нажатие ВЛЕВО
-	if (key== Qt::Key_Left) {
+	if (key == Qt::Key_Left) {
 		QPoint paddle_cords = m_paddle->getCords();
 		int x_paddle = paddle_cords.x();
 		//Перемещаем ракетку влево
-		if (x_paddle>0) {
+		if (x_paddle > 0) {
 			x_paddle -= M_PADDLE_STEP;
 			paddle_cords.setX(x_paddle);
 			m_paddle->setCords(paddle_cords);
@@ -399,11 +383,11 @@ void Arkanoid::keyPressEvent(QKeyEvent* event) {
 		}
 	}
 	//Нажатие ВПРАВО
-	else if (key==Qt::Key_Right) {
+	else if (key == Qt::Key_Right) {
 		QPoint paddle_cords = m_paddle->getCords();
 		int paddle_x = paddle_cords.x();
 		//Перемещение вправо
-		if (paddle_x<M_WIDTH - m_paddle->getImage().width()) {
+		if (paddle_x < M_WIDTH - m_paddle->getImage().width()) {
 			paddle_x += M_PADDLE_STEP;
 			paddle_cords.setX(paddle_x);
 			m_paddle->setCords(paddle_cords);
@@ -422,14 +406,14 @@ void Arkanoid::keyPressEvent(QKeyEvent* event) {
 		startGame(); //Игра начинается, выполните моё задание если хотите выжить)
 	}
 	//Пауза 
-	else if ((key == Qt::Key_P || key == Qt::Key_Escape)  && !m_new_game) {
+	else if ((key == Qt::Key_P || key == Qt::Key_Escape) && !m_new_game) {
 		if (m_timerID != 0)//если игра не на паузе
 			pauseGame();//то ставим её
 		else//Если игра на паузе
 			startGame();//то снимаем её
 	}
 	//Новая игра
-	else if (key==Qt::Key_N) 
+	else if (key == Qt::Key_N)
 		newGame();
 
 	this->repaint();//Перерисовка

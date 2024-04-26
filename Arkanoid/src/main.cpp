@@ -6,10 +6,9 @@ int main(int argc, char* argv[])
 	QApplication a(argc, argv);
 
 	Arkanoid window;
-
-	window.setWindowTitle("Window");
-	window.setWindowIcon(QIcon("src/textures/paddle.jpg"));
+	window.setWindowTitle("Arkanoid");
+	window.setWindowIcon(QIcon("textures/Paddle_1.png"));
 	window.show();
-
+	
 	return a.exec();
 }
