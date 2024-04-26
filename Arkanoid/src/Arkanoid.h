@@ -39,5 +39,5 @@ private:
 	bool m_new_game; // новая игра
 
 protected:
-	void paintEvent(QPaintEvent* event) override;
+	void paintEvent(QPaintEvent* event) override; //Переопределение метода от которого наследуем класс
 };

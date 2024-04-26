@@ -72,7 +72,7 @@ void Arkanoid::newGame() {
 
 
 	// Выделяем память под объекты кирпичей, задаем им изображение и начальные координаты
-	// Создайте вектор с путями к изображениям кирпичей
+	// вектор с путями к изображениям кирпичей
 	std::vector<QString> brick_images = {
 		"textures/BlueWall.png",
 		"textures/GoldWall.png",
@@ -87,7 +87,7 @@ void Arkanoid::newGame() {
 	};
 	QImage brick_image("textures/BlueWall.png");
 	qreal widget_width = this->width();
-	QRandomGenerator generator; // Создайте объект генератора случайных чисел
+	QRandomGenerator generator; // объект генератора случайных чисел
 
 	for (int h = 0; h < M_BRICKS_IN_HEIGHT; h++)
 	{
@@ -95,7 +95,7 @@ void Arkanoid::newGame() {
 		for (int w = 0; w < M_BRICKS_IN_WIDTH; w++)
 		{
 			m_bricks.push_back(new Item());
-			// Выберите случайный индекс изображения из вектора
+			// случайный индекс изображения из вектора
 			int random_index = generator.bounded(brick_images.size());
 			QString random_image_path = brick_images[random_index];
 			QImage brick_image(random_image_path);
@@ -150,10 +150,8 @@ void Arkanoid::ballMove() {
 	int y = temp.y() + add_y;
 	m_ball->setCords(QPoint(x, y));
 }
-
 //!!!!!!Обработка столкновений шарика!!!!!!
 void Arkanoid::checkBallTouch() {
-
 	// Получаем информацию о координатах и размере мячика и размерах игрового поля
 	QPoint ball_cords = m_ball->getCords();
 	QImage ball_image = m_ball->getImage();
