@@ -1,5 +1,5 @@
 # Akranoid
-Test task with Qt framework for PFG Company (Ru.)
+Qt framework simle project
 Code comments only on russian language 
 
 My Qt version 6.7.0 and CMake verison 3.24.3
